@@ -1,0 +1,13 @@
+# IDEs
+**/.idea
+**.iml
+
+# Python
+.venv
+
+# Generated code
+**/lib
+py/workshop
+
+# Standard
+**/tmp

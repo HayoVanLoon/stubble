@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "path": "/",
+  "resp": {
+    "statusCode": 200,
+    "body": "hello world"
+  }
+}
