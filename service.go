@@ -51,7 +51,7 @@ func (h *Handler) GetResponse(r *http.Request) (Response, error) {
 	for _, ru := range rs {
 		s := ru.Match(r, body)
 		if s > score {
-			best = ru.Resp
+			best = ru.Response
 			score = s
 		}
 	}

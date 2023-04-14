@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sort"
+	"strings"
 )
 
 const Wildcard = "*"
@@ -16,17 +18,19 @@ type Response struct {
 }
 
 type Rule struct {
-	Method          string `json:"method"`
-	Path            string `json:"path"`
-	PathRegex       string `json:"pathRegex"`
-	pathRegex       *regexp.Regexp
+	Method    string `json:"method"`
+	Path      string `json:"path"`
+	PathRegex string `json:"pathRegex"`
+	pathRegex *regexp.Regexp
+	Params    map[string][]string `json:"params"`
+	// TODO(hvl): matching
 	Headers         map[string][]string `json:"headers"`
 	BodyString      string              `json:"bodyString"`
 	BodyStringRegex string              `json:"bodyStringRegex"`
 	// map or slice
 	BodyJSON        any `json:"body"`
 	bodyStringRegex *regexp.Regexp
-	Resp            Response `json:"resp"`
+	Response        Response `json:"resp"`
 }
 
 func (ru Rule) Match(r *http.Request, body []byte) int {
@@ -34,9 +38,69 @@ func (ru Rule) Match(r *http.Request, body []byte) int {
 	score += matchMethod(ru, r)
 	score += matchPath(ru, r)
 	score += matchPathRegex(ru, r)
+	score += matchParams(ru, r)
 	score += matchBodyStringRegex(ru, body)
 	score += matchBodyJSON(ru, body)
 	return score
+}
+
+func matchMethod(ru Rule, r *http.Request) int {
+	if ru.Method != "" {
+		if ru.Method == r.Method {
+			return 1
+		}
+		return -1000
+	}
+	return 0
+}
+
+func matchPath(ru Rule, r *http.Request) int {
+	if ru.Path != "" {
+		p, _, _ := strings.Cut(r.URL.Path, "?")
+		if ru.Path == p {
+			return 1
+		}
+		return -1000
+	}
+	return 0
+}
+
+func matchPathRegex(ru Rule, r *http.Request) int {
+	if ru.pathRegex != nil {
+		p, _, _ := strings.Cut(r.URL.Path, "?")
+		if ru.pathRegex.MatchString(p) {
+			return 1
+		}
+		return -1000
+	}
+	return 0
+}
+
+func matchParams(ru Rule, r *http.Request) int {
+	if len(ru.Params) == 0 {
+		return 0
+	}
+	q := r.URL.Query()
+	for k, vs := range ru.Params {
+		vs2, ok := q[k]
+		if !ok {
+			return -1000
+		}
+		ss := sort.StringSlice(vs2)
+		for _, v := range vs {
+			if ss.Search(v) < 0 {
+				return -1000
+			}
+		}
+	}
+	return 1
+}
+
+func matchBodyStringRegex(ru Rule, body []byte) int {
+	if ru.bodyStringRegex != nil && ru.bodyStringRegex.Match(body) {
+		return 1
+	}
+	return 0
 }
 
 func matchBodyJSON(ru Rule, body []byte) int {
@@ -148,37 +212,9 @@ func matchJSONObject(bd map[string]any, obj map[string]any) bool {
 	return true
 }
 
-func matchMethod(ru Rule, r *http.Request) int {
-	if ru.Method != "" && ru.Method != r.Method {
-		return 1
-	}
-	return 0
-}
-
-func matchPath(ru Rule, r *http.Request) int {
-	if ru.Path != "" && ru.Path == r.URL.Path {
-		return 1
-	}
-	return 0
-}
-
-func matchPathRegex(ru Rule, r *http.Request) int {
-	if ru.pathRegex != nil && ru.pathRegex.MatchString(r.URL.Path) {
-		return 1
-	}
-	return 0
-}
-
-func matchBodyStringRegex(ru Rule, body []byte) int {
-	if ru.bodyStringRegex != nil && ru.bodyStringRegex.Match(body) {
-		return 1
-	}
-	return 0
-}
-
 func (ru Rule) EqualMatch(other Rule) bool {
-	ru.Resp = Response{}
-	other.Resp = Response{}
+	ru.Response = Response{}
+	other.Response = Response{}
 	return reflect.DeepEqual(ru, other)
 }
 

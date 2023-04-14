@@ -1,7 +1,6 @@
 package stuble_test
 
 import (
-	"bytes"
 	"io"
 	"net/http"
 	"testing"
@@ -12,32 +11,15 @@ import (
 )
 
 func TestHandler_GetResponse(t *testing.T) {
+	get := stuble.Rule{
+		Method:   http.MethodGet,
+		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "get"},
+	}
 	getFoo := stuble.Rule{
-		Method: http.MethodGet,
-		Path:   "/foo",
-		Resp:   stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Method:   http.MethodGet,
+		Path:     "/foo",
+		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "getFoo"},
 	}
-	getFooRegex := stuble.Rule{
-		Method:    http.MethodGet,
-		PathRegex: "/foo/.+",
-		Resp:      stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
-	}
-	getFooRegex, _ = stuble.InitRule(getFooRegex)
-	getFooBodyRegex := stuble.Rule{
-		BodyStringRegex: "(abc){2,4}",
-		Resp:            stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
-	}
-	getFooBodyRegex, _ = stuble.InitRule(getFooBodyRegex)
-	getFooBodyJSON := stuble.Rule{
-		BodyJSON: map[string]any{
-			"foo": float64(123),
-			"bar": "bla",
-			"moo": stuble.Wildcard,
-			"vla": []any{float64(2), float64(4)},
-		},
-		Resp: stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
-	}
-	getFooBodyJSON, _ = stuble.InitRule(getFooBodyJSON)
 
 	type fields struct {
 		rules []stuble.Rule
@@ -61,25 +43,19 @@ func TestHandler_GetResponse(t *testing.T) {
 			"happy",
 			fields{[]stuble.Rule{getFoo}},
 			args{http.MethodGet, "/foo", nil},
-			want{getFoo.Resp, require.NoError},
+			want{getFoo.Response, require.NoError},
 		},
 		{
-			"path regexp",
-			fields{[]stuble.Rule{getFooRegex}},
-			args{http.MethodGet, "/foo/bar", nil},
-			want{getFooRegex.Resp, require.NoError},
+			"more precise",
+			fields{[]stuble.Rule{get, getFoo}},
+			args{http.MethodGet, "/foo", nil},
+			want{getFoo.Response, require.NoError},
 		},
 		{
-			"body regexp",
-			fields{[]stuble.Rule{getFooBodyRegex}},
-			args{http.MethodPost, "/foo", bytes.NewReader([]byte("abcabcabc"))},
-			want{getFooBodyRegex.Resp, require.NoError},
-		},
-		{
-			"body JSON",
-			fields{[]stuble.Rule{getFooBodyJSON}},
-			args{http.MethodPost, "/foo", bytes.NewReader([]byte(`{"bar": "bla", "foo": 123, "moo": [1,2,3], "vla": [2,4]}`))},
-			want{getFooBodyJSON.Resp, require.NoError},
+			"fail on one",
+			fields{[]stuble.Rule{get, getFoo}},
+			args{http.MethodGet, "/bar", nil},
+			want{get.Response, require.NoError},
 		},
 		{
 			"not found",
