@@ -32,25 +32,28 @@ type Handler struct {
 
 // NotFound is used when nothing matches. A 5xx is returned as a 404 would be
 // easier to confuse with a normal prepared response.
-var NotFound = Response{
-	StatusCode: http.StatusNotImplemented,
-	BodyString: "no response for request",
+var NotFound = Rule{
+	Name: "no_match",
+	Response: Response{
+		StatusCode: http.StatusNotImplemented,
+		BodyString: "no response for request",
+	},
 }
 
-// GetResponse retrieves the best matching response for the request.
-func (h *Handler) GetResponse(r *http.Request, body []byte) (Response, error) {
+// GetRule retrieves the best matching response for the request.
+func (h *Handler) GetRule(r *http.Request, body []byte) (Rule, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	rs, err := h.rules.ListRules(ctx)
 	if err != nil {
-		return Response{}, err
+		return Rule{}, err
 	}
 	best := NotFound
 	score := 0
 	for _, ru := range rs {
 		s := ru.Match(r, body)
 		if s > score {
-			best = ru.Response
+			best = ru
 			score = s
 		}
 	}
@@ -94,7 +97,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	resp, err := h.GetResponse(r, body)
+	ru, err := h.GetRule(r, body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("error: " + err.Error()))
@@ -102,16 +105,29 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(resp.StatusCode)
-	if resp.BodyString != "" {
-		_, _ = w.Write([]byte(resp.BodyString))
+	w.WriteHeader(ru.Response.StatusCode)
+	respBody := buildResponseBody(ru.Response)
+	if len(respBody) > 0 {
+		_, _ = w.Write(respBody)
 	}
 
-	logResult(resp, r, body)
+	logResult(ru, r, body, respBody)
 }
 
-func logResult(resp Response, r *http.Request, body []byte) {
-	msg := fmt.Sprintf("(%d) %s %s", resp.StatusCode, r.Method, r.URL.String())
+func buildResponseBody(resp Response) []byte {
+	if resp.BodyString != "" {
+		return []byte(resp.BodyString)
+	}
+	if resp.Body != nil {
+		bs, _ := json.Marshal(resp.Body)
+		return bs
+	}
+	return nil
+}
+
+func logResult(ru Rule, r *http.Request, body, rBody []byte) {
+	rep := fmt.Sprintf("%d|%s|%d", ru.Response.StatusCode, ru.Name, len(rBody))
+	msg := fmt.Sprintf("(%s) %s %s", rep, r.Method, r.URL.String())
 	if len(body) > 0 {
 		msg += " <<< " + string(body)
 	}

@@ -41,6 +41,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	log.Printf("Stuble server listening on port %s", port)
 	if err = s.Serve(l); err != nil {
 		log.Printf(err.Error())
 	}
