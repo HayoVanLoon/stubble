@@ -16,7 +16,7 @@ const Wildcard = ".*"
 type Response struct {
 	StatusCode int    `json:"statusCode"`
 	BodyString string `json:"bodyString"`
-	Body       any    `json:"body"`
+	BodyJSON   any    `json:"bodyJson"`
 }
 
 type Rule struct {

@@ -4,7 +4,7 @@
   "path": "/",
   "response": {
     "statusCode": 200,
-    "body": "hello world"
+    "bodyString": "hello world"
   }
 }
 {
@@ -13,7 +13,7 @@
   "path": "/foo",
   "response": {
     "statusCode": 200,
-    "body": "hello foo"
+    "bodyString": "hello foo"
   }
 }
 {
@@ -29,7 +29,7 @@
   "body": {"answer": 42},
   "response": {
     "statusCode": 200,
-    "body": {
+    "bodyJSON": {
       "foo": "bar",
       "bla": "vla"
     }

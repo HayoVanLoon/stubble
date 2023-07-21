@@ -118,8 +118,8 @@ func buildResponseBody(resp Response) []byte {
 	if resp.BodyString != "" {
 		return []byte(resp.BodyString)
 	}
-	if resp.Body != nil {
-		bs, _ := json.Marshal(resp.Body)
+	if resp.BodyJSON != nil {
+		bs, _ := json.Marshal(resp.BodyJSON)
 		return bs
 	}
 	return nil
