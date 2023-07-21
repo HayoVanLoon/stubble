@@ -1,5 +1,5 @@
 {
-  "name": "get-fallback",
+  "name": "get_fallback",
   "method": "GET",
   "path": "/",
   "response": {
@@ -8,7 +8,7 @@
   }
 }
 {
-  "name": "get-foo",
+  "name": "get_foo",
   "method": "GET",
   "path": "/foo",
   "response": {
@@ -17,7 +17,7 @@
   }
 }
 {
-  "name": "match-body",
+  "name": "match_body",
   "body": {"number":  123, "text": ".*"},
   "response": {
     "statusCode": 200,
@@ -25,7 +25,7 @@
   }
 }
 {
-  "name": "match-other-body",
+  "name": "match_other_body",
   "body": {"answer": 42},
   "response": {
     "statusCode": 200,
