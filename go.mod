@@ -1,4 +1,4 @@
-module github.com/HayyoVanLoon/stuble
+module github.com/HayoVanLoon/stuble
 
 go 1.20
 

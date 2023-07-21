@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/HayyoVanLoon/stuble"
+	"github.com/HayoVanLoon/stuble"
 )
 
 func parseArgs() (files []string) {
