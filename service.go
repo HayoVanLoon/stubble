@@ -1,4 +1,4 @@
-package stuble
+package stubble
 
 import (
 	"context"
@@ -80,9 +80,9 @@ func (h *Handler) AddRule(r *http.Request) error {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/stuble/") {
+	if strings.HasPrefix(r.URL.Path, "/stubble/") {
 		h.handleStubleRequests(w, r)
-		getLogger().Infof("(stuble) %s %s", r.Method, r.URL.String())
+		getLogger().Infof("(stubble) %s %s", r.Method, r.URL.String())
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleStubleRequests(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if r.URL.Path != "/stuble/requests" {
+		if r.URL.Path != "/stubble/requests" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -127,7 +127,7 @@ func (h *Handler) handleStubleRequests(w http.ResponseWriter, r *http.Request) {
 		bs, _ := json.Marshal(resp)
 		_, _ = w.Write(bs)
 	case http.MethodPost:
-		if r.URL.Path != "/stuble/responses" {
+		if r.URL.Path != "/stubble/responses" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}

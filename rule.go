@@ -1,4 +1,4 @@
-package stuble
+package stubble
 
 import (
 	"encoding/json"

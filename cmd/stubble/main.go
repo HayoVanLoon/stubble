@@ -1,13 +1,12 @@
 package main
 
 import (
+	"github.com/HayoVanLoon/stubble"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/HayoVanLoon/stuble"
 )
 
 func parseArgs() (files []string) {
@@ -25,7 +24,7 @@ func main() {
 
 	files := parseArgs()
 
-	h, err := stuble.FromFiles(files...)
+	h, err := stubble.FromFiles(files...)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

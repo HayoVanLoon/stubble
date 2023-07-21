@@ -1,4 +1,4 @@
-package stuble_test
+package stubble_test
 
 import (
 	"bytes"
@@ -7,22 +7,22 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/HayoVanLoon/stuble"
+	"github.com/HayoVanLoon/stubble"
 )
 
 func TestHandler_GetResponse(t *testing.T) {
-	get := stuble.Rule{
+	get := stubble.Rule{
 		Method:   http.MethodGet,
-		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "get"},
+		Response: stubble.Response{StatusCode: http.StatusOK, BodyString: "get"},
 	}
-	getFoo := stuble.Rule{
+	getFoo := stubble.Rule{
 		Method:   http.MethodGet,
 		Path:     "/foo",
-		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "getFoo"},
+		Response: stubble.Response{StatusCode: http.StatusOK, BodyString: "getFoo"},
 	}
 
 	type fields struct {
-		rules []stuble.Rule
+		rules []stubble.Rule
 	}
 	type args struct {
 		method string
@@ -30,7 +30,7 @@ func TestHandler_GetResponse(t *testing.T) {
 		body   []byte
 	}
 	type want struct {
-		value stuble.Rule
+		value stubble.Rule
 		err   require.ErrorAssertionFunc
 	}
 	tests := []struct {
@@ -41,38 +41,38 @@ func TestHandler_GetResponse(t *testing.T) {
 	}{
 		{
 			"happy",
-			fields{[]stuble.Rule{getFoo}},
+			fields{[]stubble.Rule{getFoo}},
 			args{http.MethodGet, "/foo", nil},
 			want{getFoo, require.NoError},
 		},
 		{
 			"more precise",
-			fields{[]stuble.Rule{get, getFoo}},
+			fields{[]stubble.Rule{get, getFoo}},
 			args{http.MethodGet, "/foo", nil},
 			want{getFoo, require.NoError},
 		},
 		{
 			"fail on one",
-			fields{[]stuble.Rule{get, getFoo}},
+			fields{[]stubble.Rule{get, getFoo}},
 			args{http.MethodGet, "/bar", nil},
 			want{get, require.NoError},
 		},
 		{
 			"not found",
-			fields{[]stuble.Rule{getFoo}},
+			fields{[]stubble.Rule{getFoo}},
 			args{http.MethodGet, "/moo", nil},
-			want{stuble.NotFound, require.NoError},
+			want{stubble.NotFound, require.NoError},
 		},
 		{
 			"no rules",
 			fields{},
 			args{http.MethodGet, "/foo", nil},
-			want{stuble.NotFound, require.NoError},
+			want{stubble.NotFound, require.NoError},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, _ := stuble.New(tt.fields.rules...)
+			h, _ := stubble.New(tt.fields.rules...)
 
 			req, _ := http.NewRequest(tt.args.method, tt.args.path, bytes.NewReader(tt.args.body))
 			actual, err := h.GetRule(req, tt.args.body)

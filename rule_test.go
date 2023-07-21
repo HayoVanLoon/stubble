@@ -1,4 +1,4 @@
-package stuble_test
+package stubble_test
 
 import (
 	"net/http"
@@ -7,46 +7,46 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/HayoVanLoon/stuble"
+	"github.com/HayoVanLoon/stubble"
 )
 
 func TestRule_Match(t *testing.T) {
-	getFoo := stuble.Rule{
+	getFoo := stubble.Rule{
 		Method:   http.MethodGet,
 		Path:     "/foo",
-		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Response: stubble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
 	}
-	getFooRegex := stuble.Rule{
+	getFooRegex := stubble.Rule{
 		Method:    http.MethodGet,
 		PathRegex: "/foo/.+",
-		Response:  stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Response:  stubble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
 	}
-	getFooRegex, _ = stuble.InitRule(getFooRegex)
-	getFooBodyRegex := stuble.Rule{
+	getFooRegex, _ = stubble.InitRule(getFooRegex)
+	getFooBodyRegex := stubble.Rule{
 		BodyStringRegex: "(abc){2,4}",
-		Response:        stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Response:        stubble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
 	}
-	getFooBodyRegex, _ = stuble.InitRule(getFooBodyRegex)
-	getFooBodyJSON := stuble.Rule{
+	getFooBodyRegex, _ = stubble.InitRule(getFooBodyRegex)
+	getFooBodyJSON := stubble.Rule{
 		BodyJSON: map[string]any{
 			"foo": float64(123),
 			"bar": "bla",
-			"moo": stuble.Wildcard,
+			"moo": stubble.Wildcard,
 			"vla": []any{float64(2), float64(4)},
 		},
-		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Response: stubble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
 	}
-	getFooBodyJSON, _ = stuble.InitRule(getFooBodyJSON)
-	getParams := stuble.Rule{
+	getFooBodyJSON, _ = stubble.InitRule(getFooBodyJSON)
+	getParams := stubble.Rule{
 		Method:   http.MethodGet,
 		Path:     "/foo",
 		Params:   map[string][]string{"a": {"b"}, "x": {"y", "z"}},
-		Response: stuble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
+		Response: stubble.Response{StatusCode: http.StatusOK, BodyString: "bar"},
 	}
-	getParams, _ = stuble.InitRule(getParams)
+	getParams, _ = stubble.InitRule(getParams)
 
 	type fields struct {
-		rule stuble.Rule
+		rule stubble.Rule
 	}
 	type args struct {
 		method  string
