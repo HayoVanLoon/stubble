@@ -6,6 +6,10 @@ import (
 
 type stdLogger struct{}
 
+func (s *stdLogger) Debugf(format string, a ...any) {
+	log.Printf(format, a...)
+}
+
 func (s *stdLogger) Infof(format string, a ...any) {
 	log.Printf(format, a...)
 }

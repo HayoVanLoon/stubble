@@ -1,0 +1,23 @@
+{
+  "method": "GET",
+  "path": "/",
+  "response": {
+    "statusCode": 200,
+    "body": "hello world"
+  }
+}
+{
+  "method": "GET",
+  "path": "/foo",
+  "response": {
+    "statusCode": 200,
+    "body": "hello foo"
+  }
+}
+{
+  "body": {"number":  123, "text": ".*"},
+  "response": {
+    "statusCode": 200,
+    "body": "hello body"
+  }
+}

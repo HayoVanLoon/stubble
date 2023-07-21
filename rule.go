@@ -3,6 +3,7 @@ package stuble
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-const Wildcard = "*"
+const Wildcard = ".*"
 
 type Response struct {
 	StatusCode int    `json:"statusCode"`
@@ -30,7 +31,7 @@ type Rule struct {
 	// map or slice
 	BodyJSON        any `json:"body"`
 	bodyStringRegex *regexp.Regexp
-	Response        Response `json:"resp"`
+	Response        Response `json:"response"`
 }
 
 func (ru Rule) Match(r *http.Request, body []byte) int {
@@ -234,4 +235,20 @@ func InitRule(r Rule) (Rule, error) {
 		}
 	}
 	return r, nil
+}
+
+func RuleFromRequest(r *http.Request) Rule {
+	bs, err := io.ReadAll(r.Body)
+	if err != nil {
+		getLogger().Infof("could not read request body")
+	}
+	defer func() { _ = r.Body.Close() }()
+	ru := Rule{
+		Method:     r.Method,
+		Path:       r.URL.Path,
+		Params:     r.URL.Query(),
+		Headers:    r.Header,
+		BodyString: string(bs),
+	}
+	return ru
 }

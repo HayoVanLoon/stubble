@@ -7,11 +7,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 )
 
 type Logger interface {
+	Debugf(format string, a ...any)
 	Infof(format string, a ...any)
 	Warnf(format string, a ...any)
 	Errorf(format string, a ...any)
@@ -23,28 +24,26 @@ type Persistence interface {
 	SaveRule(context.Context, Rule) error
 }
 
+// A Handler handles stubbed calls.
 type Handler struct {
-	rules Persistence
+	rules    Persistence
+	requests []Rule
 }
 
+// NotFound is used when nothing matches. A 5xx is returned as a 404 would be
+// easier to confuse with a normal prepared response.
 var NotFound = Response{
-	StatusCode: http.StatusNotFound,
+	StatusCode: http.StatusNotImplemented,
 	BodyString: "no response for request",
 }
 
-func (h *Handler) GetResponse(r *http.Request) (Response, error) {
+// GetResponse retrieves the best matching response for the request.
+func (h *Handler) GetResponse(r *http.Request, body []byte) (Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	rs, err := h.rules.ListRules(ctx)
 	if err != nil {
 		return Response{}, err
-	}
-	var body []byte
-	if r.Body != nil {
-		body, err = io.ReadAll(r.Body)
-		if err != nil {
-			return Response{}, fmt.Errorf("error reading request body: %w", err)
-		}
 	}
 	best := NotFound
 	score := 0
@@ -77,28 +76,83 @@ func (h *Handler) AddRule(r *http.Request) error {
 	return nil
 }
 
-const XStubleSetRule = "X-Stuble-Set-Rule"
-
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if ok, _ := strconv.ParseBool(r.Header.Get(XStubleSetRule)); ok {
+	if strings.HasPrefix(r.URL.Path, "/stuble/") {
+		h.handleStubleRequests(w, r)
+		getLogger().Infof("(stuble) %s %s", r.Method, r.URL.String())
+		return
+	}
+
+	var body []byte
+	if r.Body != nil {
+		var err error
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("error: " + err.Error()))
+			getLogger().Errorf("error reading request body: %v", err)
+			return
+		}
+	}
+	resp, err := h.GetResponse(r, body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("error: " + err.Error()))
+		getLogger().Errorf("error fetching response: %v", err)
+		return
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	if resp.BodyString != "" {
+		_, _ = w.Write([]byte(resp.BodyString))
+	}
+
+	logResult(resp, r, body)
+}
+
+func logResult(resp Response, r *http.Request, body []byte) {
+	msg := fmt.Sprintf("(%d) %s %s", resp.StatusCode, r.Method, r.URL.String())
+	if len(body) > 0 {
+		msg += " <<< " + string(body)
+	}
+	getLogger().Infof(msg)
+}
+
+func (h *Handler) handleStubleRequests(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		if r.URL.Path != "/stuble/requests" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		resp := struct {
+			Requests []Rule `json:"requests"`
+		}{Requests: h.requests}
+		bs, _ := json.Marshal(resp)
+		_, _ = w.Write(bs)
+	case http.MethodPost:
+		if r.URL.Path != "/stuble/responses" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		if err := h.AddRule(r); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+	}
+}
+
+func (h *Handler) storeRequest(r *http.Request) {
+	const maxRequests = 40
+	ru := RuleFromRequest(r)
+	if len(h.requests) < maxRequests {
+		h.requests = append(h.requests, ru)
 		return
 	}
-	resp, err := h.GetResponse(r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("error: " + err.Error()))
-		return
-	}
-	w.WriteHeader(resp.StatusCode)
-	if resp.BodyString != "" {
-		_, _ = w.Write([]byte(resp.BodyString))
-	}
+	copy(h.requests, h.requests[1:])
+	h.requests[len(h.requests)-1] = ru
 }
 
 func (h *Handler) Close() error {
