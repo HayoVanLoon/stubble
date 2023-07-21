@@ -80,5 +80,5 @@ func TestExample(t *testing.T) {
 	}
 }
 
-//go:embed stuble-example.ndjson
+//go:embed stubble-example.ndjson
 var file []byte
