@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/HayyoVanLoon/stuble"
+	"github.com/HayoVanLoon/stuble"
 )
 
 func TestRule_Match(t *testing.T) {

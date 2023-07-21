@@ -114,26 +114,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logResult(ru, r, body, respBody)
 }
 
-func buildResponseBody(resp Response) []byte {
-	if resp.BodyString != "" {
-		return []byte(resp.BodyString)
-	}
-	if resp.BodyJSON != nil {
-		bs, _ := json.Marshal(resp.BodyJSON)
-		return bs
-	}
-	return nil
-}
-
-func logResult(ru Rule, r *http.Request, body, rBody []byte) {
-	rep := fmt.Sprintf("%d|%s|%d", ru.Response.StatusCode, ru.Name, len(rBody))
-	msg := fmt.Sprintf("(%s) %s %s", rep, r.Method, r.URL.String())
-	if len(body) > 0 {
-		msg += " <<< " + string(body)
-	}
-	getLogger().Infof(msg)
-}
-
 func (h *Handler) handleStubleRequests(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -189,6 +169,26 @@ func FromFiles(files ...string) (*Handler, error) {
 
 func New(rules ...Rule) (*Handler, error) {
 	return &Handler{rules: inMemory{rules: rules}}, nil
+}
+
+func buildResponseBody(resp Response) []byte {
+	if resp.BodyString != "" {
+		return []byte(resp.BodyString)
+	}
+	if resp.BodyJSON != nil {
+		bs, _ := json.Marshal(resp.BodyJSON)
+		return bs
+	}
+	return nil
+}
+
+func logResult(ru Rule, r *http.Request, body, rBody []byte) {
+	rep := fmt.Sprintf("%d|%s|%d", ru.Response.StatusCode, ru.Name, len(rBody))
+	msg := fmt.Sprintf("(%s) %s %s", rep, r.Method, r.URL.String())
+	if len(body) > 0 {
+		msg += " <<< " + string(body)
+	}
+	getLogger().Infof(msg)
 }
 
 func readFile(f string) ([]Rule, error) {
