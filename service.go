@@ -81,7 +81,7 @@ func (h *Handler) AddRule(r *http.Request) error {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/stubble/") {
-		h.handleStubleRequests(w, r)
+		h.handleStubbleRequests(w, r)
 		getLogger().Infof("(stubble) %s %s", r.Method, r.URL.String())
 		return
 	}
@@ -114,7 +114,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logResult(ru, r, body, respBody)
 }
 
-func (h *Handler) handleStubleRequests(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleStubbleRequests(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		if r.URL.Path != "/stubble/requests" {
