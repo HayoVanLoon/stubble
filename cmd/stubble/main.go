@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/HayoVanLoon/stubble"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/HayoVanLoon/stubble"
 )
 
 func parseArgs() (files []string) {
