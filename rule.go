@@ -85,40 +85,59 @@ func matchParams(ru Rule, r *http.Request) int {
 	if len(ru.Params) == 0 {
 		return 0
 	}
+	score := 0
 	q := r.URL.Query()
-	for k, vs := range ru.Params {
-		vs2, ok := q[k]
+	for k, want := range ru.Params {
+		got, ok := q[k]
 		if !ok {
 			return -1000
 		}
-		ss := sort.StringSlice(vs2)
-		for _, v := range vs {
-			if ss.Search(v) < 0 {
-				return -1000
-			}
+		x, ok := scoreStringSlice(want, got)
+		if !ok {
+			return -1000
 		}
+		score += x
 	}
-	return 1
+	return score
 }
 
 func matchHeaders(ru Rule, r *http.Request) int {
 	if len(ru.Headers) == 0 {
 		return 0
 	}
+	score := 0
 	q := r.Header
-	for k, vs := range ru.Headers {
-		vs2, ok := q[textproto.CanonicalMIMEHeaderKey(k)]
+	for k, want := range ru.Headers {
+		got, ok := q[textproto.CanonicalMIMEHeaderKey(k)]
+		if !ok || len(got) < len(want) {
+			return -1000
+		}
+		x, ok := scoreStringSlice(want, got)
 		if !ok {
 			return -1000
 		}
-		ss := sort.StringSlice(vs2)
-		for _, v := range vs {
-			if ss.Search(v) < 0 {
-				return -1000
-			}
+		score += x
+	}
+	return score
+}
+
+func scoreStringSlice(want, got []string) (int, bool) {
+	score := 0
+	sort.Strings(got)
+	i, j := 0, 0
+	for i < len(want) && j < len(got) {
+		switch {
+		case want[i] == got[j]:
+			i += 1
+			j += 1
+			score += 1
+		case want[i] > got[j]:
+			j += 1
+		case want[i] < got[j]:
+			return -1000, false
 		}
 	}
-	return 1
+	return score, true
 }
 
 func matchBodyStringRegex(ru Rule, body []byte) int {
@@ -258,8 +277,9 @@ func InitRule(r Rule) (Rule, error) {
 			return Rule{}, fmt.Errorf("error compiling body regex: %w", err)
 		}
 	}
-	for k, v := range r.Headers {
-		r.Headers[textproto.CanonicalMIMEHeaderKey(k)] = v
+	for k, vs := range r.Headers {
+		sort.Strings(vs)
+		r.Headers[textproto.CanonicalMIMEHeaderKey(k)] = vs
 	}
 	return r, nil
 }
