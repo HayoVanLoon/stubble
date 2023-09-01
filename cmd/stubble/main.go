@@ -32,9 +32,8 @@ func main() {
 	s := &http.Server{
 		Handler:           h,
 		ReadTimeout:       60 * time.Second,
-		ReadHeaderTimeout: 60 * time.Second,
-		WriteTimeout:      60 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		ReadHeaderTimeout: 1 * time.Second,
+		WriteTimeout:      10 * time.Second,
 	}
 	l, err := net.Listen("tcp4", ":"+port)
 	if err != nil {
