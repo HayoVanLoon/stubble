@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"reflect"
 	"regexp"
 	"sort"
@@ -42,6 +43,7 @@ func (ru Rule) Match(r *http.Request, body []byte) int {
 	score += matchPath(ru, r)
 	score += matchPathRegex(ru, r)
 	score += matchParams(ru, r)
+	score += matchHeaders(ru, r)
 	score += matchBodyStringRegex(ru, body)
 	score += matchBodyJSON(ru, body)
 	return score
@@ -86,6 +88,26 @@ func matchParams(ru Rule, r *http.Request) int {
 	q := r.URL.Query()
 	for k, vs := range ru.Params {
 		vs2, ok := q[k]
+		if !ok {
+			return -1000
+		}
+		ss := sort.StringSlice(vs2)
+		for _, v := range vs {
+			if ss.Search(v) < 0 {
+				return -1000
+			}
+		}
+	}
+	return 1
+}
+
+func matchHeaders(ru Rule, r *http.Request) int {
+	if len(ru.Headers) == 0 {
+		return 0
+	}
+	q := r.Header
+	for k, vs := range ru.Headers {
+		vs2, ok := q[textproto.CanonicalMIMEHeaderKey(k)]
 		if !ok {
 			return -1000
 		}
@@ -235,6 +257,9 @@ func InitRule(r Rule) (Rule, error) {
 		if err != nil {
 			return Rule{}, fmt.Errorf("error compiling body regex: %w", err)
 		}
+	}
+	for k, v := range r.Headers {
+		r.Headers[textproto.CanonicalMIMEHeaderKey(k)] = v
 	}
 	return r, nil
 }
