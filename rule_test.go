@@ -98,7 +98,7 @@ func TestRule_Match(t *testing.T) {
 				nil,
 				nil,
 			},
-			want{3},
+			want{5},
 		},
 		{
 			"not found",
