@@ -15,9 +15,10 @@ import (
 const Wildcard = ".*"
 
 type Response struct {
-	StatusCode int    `json:"statusCode"`
-	BodyString string `json:"bodyString"`
-	BodyJSON   any    `json:"bodyJson"`
+	StatusCode int                 `json:"statusCode"`
+	BodyString string              `json:"bodyString"`
+	BodyJSON   any                 `json:"bodyJson"`
+	Headers    map[string][]string `json:"headers"`
 }
 
 type Rule struct {
@@ -92,6 +93,13 @@ func matchParams(ru Rule, r *http.Request) int {
 		if !ok {
 			return -1000
 		}
+		if len(want) == 0 {
+			score += 1
+			continue
+		}
+		if len(got) < len(want) {
+			return -1000
+		}
 		x, ok := scoreStringSlice(want, got)
 		if !ok {
 			return -1000
@@ -109,7 +117,14 @@ func matchHeaders(ru Rule, r *http.Request) int {
 	q := r.Header
 	for k, want := range ru.Headers {
 		got, ok := q[textproto.CanonicalMIMEHeaderKey(k)]
-		if !ok || len(got) < len(want) {
+		if !ok {
+			return -1000
+		}
+		if len(want) == 0 {
+			score += 1
+			continue
+		}
+		if len(got) < len(want) {
 			return -1000
 		}
 		x, ok := scoreStringSlice(want, got)
