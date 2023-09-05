@@ -106,6 +106,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(ru.Response.StatusCode)
+	setHeaders(w, ru)
 	respBody := buildResponseBody(ru.Response)
 	if len(respBody) > 0 {
 		_, _ = w.Write(respBody)
@@ -171,6 +172,14 @@ func New(rules ...Rule) (*Handler, error) {
 	return &Handler{rules: inMemory{rules: rules}}, nil
 }
 
+func setHeaders(w http.ResponseWriter, ru Rule) {
+	for k, vs := range ru.Response.Headers {
+		for _, v := range vs {
+			w.Header().Set(k, v)
+		}
+	}
+}
+
 func buildResponseBody(resp Response) []byte {
 	if resp.BodyString != "" {
 		return []byte(resp.BodyString)
@@ -198,6 +207,7 @@ func readFile(f string) ([]Rule, error) {
 	}
 	defer func() { _ = r.Close() }()
 	d := json.NewDecoder(r)
+	d.DisallowUnknownFields()
 	var rs []Rule
 	for d.More() {
 		var ru Rule
