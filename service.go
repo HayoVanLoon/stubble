@@ -161,7 +161,7 @@ func FromFiles(files ...string) (*Handler, error) {
 	for _, f := range files {
 		rs, err := readFile(f)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error reading %s: %w", f, err)
 		}
 		rss = append(rss, rs...)
 	}
