@@ -163,6 +163,7 @@ func FromFiles(files ...string) (*Handler, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error reading %s: %w", f, err)
 		}
+		getLogger().Infof("loaded %s", f)
 		rss = append(rss, rs...)
 	}
 	return New(rss...)
