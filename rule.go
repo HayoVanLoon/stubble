@@ -15,27 +15,44 @@ import (
 const Wildcard = ".*"
 
 type Response struct {
-	StatusCode int                 `json:"statusCode"`
-	BodyString string              `json:"bodyString"`
-	BodyJSON   any                 `json:"bodyJson"`
-	Headers    map[string][]string `json:"headers"`
+	// Response status code
+	StatusCode int `json:"statusCode"`
+	// Response body string. Only one body field can be used.
+	BodyString string `json:"bodyString"`
+	// Response body JSON. Only one body field can be used
+	BodyJSON any `json:"bodyJson"`
+	// Response headers
+	Headers map[string][]string `json:"headers"`
 }
 
 type Rule struct {
-	Name      string `json:"name"`
-	Method    string `json:"method"`
-	Path      string `json:"path"`
+	// The name of the rule.
+	Name string `json:"name"`
+	// A description, no functional impact.
+	Description string `json:"description"`
+	// HTTP method to match.
+	Method string `json:"method"`
+	// Path to match.
+	Path string `json:"path"`
+	// Path regex to match.
 	PathRegex string `json:"pathRegex"`
 	pathRegex *regexp.Regexp
-	Params    map[string][]string `json:"params"`
+	// Request query parameters. An entry with a zero-length value list will
+	// only check for presence of the key.
+	Params map[string][]string `json:"params"`
 	// TODO(hvl): matching
-	Headers         map[string][]string `json:"headers"`
-	BodyString      string              `json:"bodyString"`
-	BodyStringRegex string              `json:"bodyStringRegex"`
-	// map or slice
+	// Request headers. An entry with a zero-length value list will only check
+	// for presence of the key.
+	Headers map[string][]string `json:"headers"`
+	// Request body to match as a string.
+	BodyString string `json:"bodyString"`
+	// Regex of body to match as a string.
+	BodyStringRegex string `json:"bodyStringRegex"`
+	// The JSON body to match. Field values can be a Wildcard.
 	BodyJSON        any `json:"body"`
 	bodyStringRegex *regexp.Regexp
-	Response        Response `json:"response"`
+	// The response to return.
+	Response Response `json:"response"`
 }
 
 func (ru Rule) Match(r *http.Request, body []byte) int {
