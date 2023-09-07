@@ -166,6 +166,9 @@ func FromFiles(files ...string) (*Handler, error) {
 		getLogger().Infof("loaded %s", f)
 		rss = append(rss, rs...)
 	}
+	if len(rss) == 0 {
+		getLogger().Infof("no files loaded")
+	}
 	return New(rss...)
 }
 
@@ -192,11 +195,14 @@ func buildResponseBody(resp Response) []byte {
 	return nil
 }
 
-func logResult(ru Rule, r *http.Request, body, rBody []byte) {
-	rep := fmt.Sprintf("%d|%s|%d", ru.Response.StatusCode, ru.Name, len(rBody))
-	msg := fmt.Sprintf("(%s) %s %s", rep, r.Method, r.URL.String())
-	if len(body) > 0 {
-		msg += " <<< " + string(body)
+func logResult(ru Rule, r *http.Request, reqBody, respBody []byte) {
+	resp := fmt.Sprintf("response: (%d) %s", ru.Response.StatusCode, ru.Name)
+	msg := fmt.Sprintf("%s; request: %s %s", resp, r.Method, r.URL.String())
+	switch {
+	case len(reqBody) > 128:
+		msg += " <<< " + string(reqBody[:128]) + "..."
+	case len(reqBody) > 0:
+		msg += " <<< " + string(reqBody)
 	}
 	getLogger().Infof(msg)
 }
