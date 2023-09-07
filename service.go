@@ -112,7 +112,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(respBody)
 	}
 
-	logResult(ru, r, body, respBody)
+	logResult(ru, r, body)
 }
 
 func (h *Handler) handleStubbleRequests(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +195,7 @@ func buildResponseBody(resp Response) []byte {
 	return nil
 }
 
-func logResult(ru Rule, r *http.Request, reqBody, respBody []byte) {
+func logResult(ru Rule, r *http.Request, reqBody []byte) {
 	resp := fmt.Sprintf("response: (%d) %s", ru.Response.StatusCode, ru.Name)
 	msg := fmt.Sprintf("%s; request: %s %s", resp, r.Method, r.URL.String())
 	switch {
